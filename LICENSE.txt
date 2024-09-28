@@ -1,0 +1,15 @@
+Proprietary License
+
+Copyright (c) 2024 Zakaria El Yassini
+
+All rights reserved. This software and associated documentation files (the "Software") are the proprietary information of Zakaria El Yassini. Any use, including the modification, distribution, or commercialization of this software, is strictly prohibited without prior written permission from Zakaria El Yassini.
+
+You may not:
+
+- Use the software for commercial purposes.
+- Modify, merge, publish, or distribute copies of the software.
+- Create derivative works based on the software.
+
+If you wish to obtain permission to use this software beyond these terms, please contact Zakaria El Yassini at Zakaria.elyassini2002@gmail.com .
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
