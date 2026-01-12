@@ -1,0 +1,279 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage[backend=biber,style=ieee,sorting=none]{biblatex}
+
+\geometry{margin=1in}
+
+% Embedded references
+\usepackage{filecontents}
+\begin{filecontents}{\jobname.bib}
+@article{BlackScholes1973,
+  author={F. Black and M. Scholes},
+  title={The Pricing of Options and Corporate Liabilities},
+  journal={The Journal of Political Economy},
+  volume={81},
+  number={3},
+  pages={637--654},
+  year={1973}
+}
+@article{Merton1976,
+  author={R. C. Merton},
+  title={Option pricing when underlying stock returns are discontinuous},
+  journal={Journal of Financial Economics},
+  volume={3},
+  number={1-2},
+  pages={125--144},
+  year={1976}
+}
+@book{Oksendal2003,
+  author={B. {\O}ksendal},
+  title={Stochastic Differential Equations: An Introduction with Applications},
+  publisher={Springer},
+  year={2003}
+}
+@book{Klebaner2005,
+  author={F. C. Klebaner},
+  title={Introduction to Stochastic Calculus with Applications},
+  publisher={Imperial College Press},
+  year={2005}
+}
+@article{Bian2016,
+  author={X. Bian and C. Kim and G. E. Karniadakis},
+  title={111 years of Brownian motion},
+  journal={Soft Matter},
+  volume={12},
+  number={30},
+  pages={6331--6346},
+  year={2016}
+}
+@book{Ross2012,
+  author={S. M. Ross},
+  title={Simulations},
+  publisher={Academic Press},
+  year={2012}
+}
+@misc{Hyndman2024,
+  author={C. Hyndman},
+  title={Continuous-time Finance},
+  note={PowerPoint presented at MACF 402, Mathematical and Computational Finance II, Concordia University, 2024}
+}
+@article{Artzner1999,
+  author={P. Artzner and F. Delbaen and J.-M. Eber and D. Heath},
+  title={Coherent measures of risk},
+  journal={Mathematical Finance},
+  volume={9},
+  number={3},
+  pages={203--228},
+  year={1999}
+}
+\end{filecontents}
+
+\addbibresource{\jobname.bib}
+
+\title{5-day Value-at-Risk Estimation for a European Call Option \\ Using Delta-Normal Approximation and Importance Sampling}
+\author{Zakaria El Yassini}
+\date{December 28, 2024}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This work presents a rigorous framework for estimating the \textit{Value-at-Risk} (VaR) of a long European call option using the \textit{Delta-Normal Approximation}. The underlying asset is modeled as a geometric Brownian motion on a filtered probability space $(\Omega, \mathcal{F}, \{\mathcal{F}_t\}_{t \ge 0}, \mathbb{Q})$ under the risk-neutral measure $\mathbb{Q}$. The approach combines Black-Scholes option pricing \cite{BlackScholes1973}, Delta computation \cite{Hyndman2024}, and Importance Sampling using a Girsanov change of measure to assess tail risk. The 5-day VaR is formally defined following Artzner et al. \cite{Artzner1999}.
+\end{abstract}
+
+\section{Introduction}
+Value-at-Risk (VaR) quantifies the minimal loss a portfolio may incur over a given time horizon at a specified confidence level \cite{Artzner1999}. Let $(\Omega, \mathcal{F}, \{\mathcal{F}_t\}, \mathbb{P})$ be a filtered probability space supporting a standard Brownian motion. Then, for portfolio loss $L$ over horizon $\Delta t$, the $\alpha$-level VaR is defined as:
+
+\begin{equation*}
+\text{VaR}_\alpha = 
+\left\{
+\begin{array}{l}
+\inf\{x \in \mathbb{R} : \mathbb{P}(L > x) \le \alpha\}, \\[1mm]
+L = V_0 - V_{\Delta t}
+\end{array}
+\right.
+\end{equation*}
+
+This work focuses on a long European call option, estimating the 5-day VaR via the Delta-Normal approximation. Importance Sampling is applied to better capture tail events \cite{Ross2012,Hyndman2024}.
+
+\section{Theoretical Framework}
+
+\subsection{Asset Dynamics}
+The underlying risky asset $S_t^1$ evolves according to the Black-Scholes model \cite{BlackScholes1973,Merton1976}:
+
+\begin{equation*}
+\left\{
+\begin{array}{l}
+dS_t^1 =\mu S_t^1 \, dt + \sigma S_t^1 \, dB_t, \\[1mm]
+S_0^1 > 0
+\end{array}
+\right.
+\end{equation*}
+where $\mu$ is the drift, $\sigma$ is volatility, and $B_t$ is a standard Brownian motion adapted to the filtration $\{\mathcal{F}_t\}$. The risk-free bank account evolves as:
+
+\begin{equation*}
+\left\{
+\begin{array}{l}
+dS_t^0 = r S_t^0 dt \\[1mm]
+S_0^0=1.
+\end{array}
+\right.
+\end{equation*}
+
+\subsection{European Call Option Pricing}
+Let $C(t,F)$ denote the price of a European call option with strike $K$ and maturity $T$. It satisfies the Black-Scholes PDE:
+
+\begin{equation*}
+\begin{cases}
+\displaystyle \frac{\partial C}{\partial t} + \frac{1}{2} \sigma^2 F^2 \frac{\partial^2 C}{\partial F^2} - r C = 0, & 0 \le t < T, \\[3mm]
+C(T, F(T,T)) = \max(F(T,T) - K, 0)
+\end{cases}
+\end{equation*}
+The analytical solution is:
+
+\begin{equation*}
+C(t,S_t) = S_t N(d_1) - K e^{-r(T-t)} N(d_2),
+\end{equation*}
+with
+\begin{equation*}
+\begin{cases}
+d_1 = \displaystyle \frac{\ln(S_t/K) + \left(r + \frac{1}{2}\sigma^2\right)(T-t)}{\sigma \sqrt{T-t}},\\[2mm]
+d_2 = d_1 - \sigma \sqrt{T-t}.
+\end{cases}
+\end{equation*}
+
+
+\subsection{Delta and Delta-Normal Approximation for VaR}
+
+The \textit{Delta} of an option quantifies the sensitivity of the option's value to small changes in the underlying asset price. For a European call option, the Delta is given by
+
+\begin{equation*}
+\Delta = \frac{\partial C}{\partial S_0^1} 
+= e^{-rT} \, \mathbb{E}^\mathbb{Q} \left[ \mathbf{1}_{\{S_T^1>K\}} \frac{S_T^1}{S_0^1} \right]
+\text{\hfill \cite{Hyndman2024}}
+\end{equation*}
+where the expectation is taken under the risk-neutral measure $\mathbb{Q}$. This expression captures the probabilistic impact of the terminal payoff on the option's current value, reflecting the likelihood that the option finishes in-the-money. \\
+\\
+Under the \textit{Delta-Normal Approximation}, for sufficiently small movements in the underlying asset, the change in the option value $\Delta V$ can be linearized as:
+\begin{equation*}
+\begin{cases}
+\Delta V \approx \Delta \cdot V_0(S_0) \cdot \Delta S,\\[2mm]
+\Delta S \sim N(0, \sigma^2 \Delta t).
+\end{cases}
+\end{equation*}
+where $\Delta S$ represents the change in the underlying asset price over the risk horizon $\Delta t$, assumed to be normally distributed. This simplification allows us to model the portfolio loss using a univariate normal distribution, making the calculation of Value-at-Risk computationally efficient.\\
+\\
+Consequently, the $\alpha$-level Value-at-Risk over the horizon $\Delta t$ is computed as
+
+\begin{equation*}
+\begin{cases}
+\text{VaR}_\alpha = - z_\alpha \, \Delta \, \sigma \sqrt{\Delta t},\\[2mm]
+z_\alpha = N^{-1}(1-\alpha).
+\end{cases}
+\text{\hfill \cite{Artzner1999}}
+\end{equation*}
+where $z_\alpha$ is the $\alpha$-quantile of the standard normal distribution. In this context, VaR represents the **minimum loss that will not be exceeded with probability $1-\alpha$**, providing a coherent measure of tail risk for risk management purposes.
+
+
+\subsection{Importance Sampling via Girsanov}
+To capture tail events more effectively, we shift the drift under a new measure $\mathbb{Q}^{\text{IS}}$ \cite{Hyndman2024}:
+
+\begin{equation}
+\mu_{\text{IS}} = r - 0.5\sigma^2 + \text{shift factor} \cdot \sigma.
+\end{equation}
+The Radon-Nikodym derivative gives the path weights:
+
+\begin{equation}
+w_i = \frac{d\mathbb{Q}}{d\mathbb{Q}^{\text{IS}}} = \exp(-( \mu_{\text{IS}} - r)\Delta t).
+\end{equation}
+
+\section{Algorithms}
+
+\begin{algorithm}[H]
+\caption{Delta-Normal VaR Estimation}
+\begin{algorithmic}[1]
+\State \textbf{Input:} $S_0,K,r,\sigma,T,\Delta t,\alpha$
+\State Compute option Delta $\Delta$
+\State Compute $z_\alpha = \text{qnorm}(1-\alpha)$
+\State Compute VaR: $\text{VaR} = - z_\alpha \Delta \sigma \sqrt{\Delta t}$
+\State \textbf{Output:} VaR
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Importance Sampling for VaR Breaks}
+\begin{algorithmic}[1]
+\State \textbf{Input:} $S_0,K,r,\sigma,T,\Delta t,\text{shift factor},N$
+\State Initialize $Breaks = 0$
+\For{$i = 1$ to $N$}
+    \State Simulate $S_i^{\text{IS}} = S_0 \exp((\mu_{\text{IS}}-0.5\sigma^2)\Delta t + \sigma \sqrt{\Delta t} Z_i)$
+    \State Compute option value $V_i$
+    \State Compute weight $w_i = \exp(-( \mu_{\text{IS}} - r)\Delta t)$
+    \If{$V_i - V_0 < \text{VaR}$}
+        \State $Breaks \gets Breaks + w_i$
+    \EndIf
+\EndFor
+\State Estimate $\hat{\alpha}_{\text{IS}} = Breaks / N$
+\State \textbf{Output:} $\hat{\alpha}_{\text{IS}}$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Numerical Example}
+\begin{table}[h!]
+\centering
+\begin{tabular}{lc}
+\toprule
+Parameter & Value \\
+\midrule
+$S_0$ & 100 \\
+$K$ & 100 \\
+$r$ & 0.01 \\
+$\sigma$ & 0.5 \\
+$T$ & 1 year \\
+$\Delta t$ & 5/365 \\
+$\alpha$ & 0.05 \\
+$N$ & $10^6$ \\
+\bottomrule
+\end{tabular}
+\caption{Simulation parameters}
+\end{table}
+
+\subsection{Results}
+The 5-day Value-at-Risk (VaR) for a long European call option, calculated using the Delta-Normal Approximation, is:
+
+\[
+\text{VaR}_{5\text{-day}} = -5.837263.
+\]
+This indicates that, under the model assumptions, the minimum expected loss in the worst 5\% of cases over a 5-day horizon is approximately \$5.84. In other words, the portfolio is expected to lose at least this amount with 5\% probability \cite{Artzner1999}.\\  
+By incorporating Importance Sampling to better capture the tail of the distribution of asset returns, the estimated probability of observing a loss exceeding this VaR threshold is:
+
+\[
+\hat{\alpha}_{\text{IS}} = 0.02256787.
+\]
+This implies that in the simulated scenarios, only 2.26\% of outcomes exceeded the computed VaR, which is lower than the nominal 5\% level, reflecting the effectiveness of tail-focused sampling in capturing extreme events. These results highlight that using Importance Sampling can provide a more accurate estimate of tail risk, and help risk managers make informed decisions about capital allocation and potential hedging strategies.\\
+\\
+Overall, the combination of the Delta-Normal approximation with Importance Sampling demonstrates a pragmatic balance between computational efficiency and the need for realistic tail-risk assessment, providing actionable insights for risk management in options portfolios.
+
+
+\section{Discussion and Improvements}
+\begin{itemize}
+    \item \textbf{Real-Time Data Integration:} Implementing live market data sources (e.g., via \texttt{yfinance}) allows continuous updating of VaR estimates to reflect current market conditions.
+    \item \textbf{Model Enhancements:} The Delta-Normal Approximation assumes normally distributed returns, which underestimates extreme events. Incorporating stochastic volatility models (e.g., GARCH), fat-tailed distributions, or Monte Carlo simulations can provide more robust risk estimates.
+    \item \textbf{Dynamic Risk Management:} VaR estimates can feed into dynamic hedging strategies, portfolio rebalancing, and risk limit frameworks to reduce the likelihood of large, unexpected losses.
+\end{itemize}
+
+\section{Conclusion}
+The Delta-Normal Approximation offers a computationally efficient method to estimate VaR for European call options, capturing the primary sensitivity of the option to underlying price movements. Incorporating Importance Sampling via a Girsanov change of measure significantly improves the assessment of tail risk, providing a more accurate estimate of the probability and magnitude of extreme losses. Future work can enhance this framework by integrating real-time data, modeling non-normal return dynamics, and implementing fully dynamic risk management strategies to ensure robust portfolio protection under adverse market conditions.
+\newpage
+\printbibliography
+
+\end{document}
+
