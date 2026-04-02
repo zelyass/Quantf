@@ -40,7 +40,7 @@ warnings.filterwarnings('ignore')
 # CONFIG  --  Only edit this block
 # =============================================================================
 
-EXCEL_PATH        = r"C:\Users\zelya\OneDrive - Concordia University - Canada\Documents\Concordia\Graduate Studies\Courses\Year 2\Levy\SONY.xlsx"
+EXCEL_PATH        = r"Change_this_with_your_path"
 
 DATE_START        = '2020-01-02'   # inclusive
 DATE_END          = '2026-02-01'   # exclusive
